@@ -20,7 +20,8 @@ repositories {
 dependencies {
   scalaCompilerPlugin("org.scalamacros:paradise_2.12.8:2.1.1")
   api("org.scala-lang:scala-library:2.12.8")
-  api("org.smali:dexlib2:2.2.6")
+
+  implementation("org.smali:dexlib2:2.2.6")
 }
 
 tasks.withType<ScalaCompile> {
