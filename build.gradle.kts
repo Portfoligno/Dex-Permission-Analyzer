@@ -22,6 +22,7 @@ dependencies {
   api("org.scala-lang:scala-library:2.12.8")
 
   implementation("org.smali:dexlib2:2.2.6")
+  implementation("com.google.guava:guava:27.0.1-jre")
 }
 
 tasks.withType<ScalaCompile> {
