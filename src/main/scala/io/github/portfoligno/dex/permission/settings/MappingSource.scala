@@ -1,5 +1,8 @@
 package io.github.portfoligno.dex.permission.settings
 
+import io.github.portfoligno.dex.permission.data.{ClassName, MethodIdentity}
+import io.github.portfoligno.dex.permission.utility.Table
+
 case class MappingSource(
   urls: List[String] = List(
     "https://raw.githubusercontent.com/reddr/axplorer/master/permissions/api-25/framework-map-25.txt",
@@ -17,4 +20,8 @@ case class MappingSource(
     s"$ContentProvider.openTypedAssetFile($Uri,$String,$Bundle)" -> CONTENT_PROVIDER,
     s"$ContentProvider.openTypedAssetFile($Uri,$String,$Bundle,$CancellationSignal)" -> CONTENT_PROVIDER,
   )
-)
+) {
+  private[permission]
+  def fetch[F[_]]: F[Table[MethodIdentity, ClassName, Set[String]]] =
+    ???
+}
