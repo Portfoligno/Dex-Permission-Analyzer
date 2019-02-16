@@ -1,11 +1,20 @@
 package io.github.portfoligno.dex.permission.settings
 
-import cats.FlatMap
+import cats.effect.ConcurrentEffect
 import cats.instances.all._
+import cats.syntax.applicative._
 import cats.syntax.compose._
+import cats.syntax.functor._
+import cats.syntax.parallel._
+import cats.{FlatMap, Parallel}
+import fs2.text.utf8Decode
 import io.github.portfoligno.dex.permission.data.{ClassName, MethodIdentity}
 import io.github.portfoligno.dex.permission.settings.MappingParser.{axplorer, pScout}
 import io.github.portfoligno.dex.permission.utility.{->, Table, flip}
+import org.http4s.client.blaze.BlazeClientBuilder
+
+import scala.concurrent.ExecutionContext
+import scala.language.reflectiveCalls
 
 case class MappingSource(
   raw: List[String -> MappingParser] = List(
@@ -30,7 +39,44 @@ case class MappingSource(
     )
   )
 ) {
+  import io.github.portfoligno.dex.permission.utility.implicits._
+
   private[permission]
-  def fetch[F[_]]: F[Table[MethodIdentity, ClassName, Set[String]]] =
-    ???
+  def fetch[M[_] : ConcurrentEffect, F[_]](
+    executionContext: ExecutionContext = ExecutionContext.global
+  )(
+    implicit F: Parallel[M, F]
+  ): M[Table[MethodIdentity, ClassName, Set[String]]] =
+    BlazeClientBuilder[M](executionContext)
+      .resource
+      .evalMap(client =>
+        raw
+          .map {
+            case uri -> parser =>
+              client.get(uri)(
+                _
+                  .body
+                  .through(utf8Decode)
+                  .compile
+                  .fold(new StringBuilder)((b, s) => b ++= s)
+                  .map(b =>
+                    parser(b.mkString)
+                      .map(_.fold(throw _, identity))
+                      .toSeq
+                  )
+              )
+          }
+          .parSequence
+      )
+      .use(_
+        .view
+        .flatten
+        .groupBy(_._1)
+        .view
+        .map(t =>
+          t._1 -> t._2.map(_._2).toSet
+        )
+        .toTable
+        .pure[M]
+      )
 }

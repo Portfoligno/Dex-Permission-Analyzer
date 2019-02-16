@@ -9,15 +9,21 @@ package object utility {
       Some(arg)
   }
 
-  object Table {
-    def apply[A, B, C](elems: A -> B -> C*): Table[A, B, C] =
-      elems
-        .groupBy(_._1._1)
-        .mapValues(_.view.map(t => t._1._2 -> t._2).toMap)
-  }
-
   @inline
   private[permission]
   def flip[A, B, C](f: A => B => C)(x: B)(y: A): C =
     f(y)(x)
+
+
+  private[permission]
+  object implicits {
+    implicit class ToTableOps[A](private val elems: Traversable[A]) extends AnyVal {
+      def toTable[T, U, V](implicit ev: A <:< (T -> U -> V)): Table[T, U, V] =
+        elems
+          .groupBy(_._1._1)
+          .mapValues(_
+            .view.map(t => t._1._2 -> t._2)
+            .toMap)
+    }
+  }
 }
