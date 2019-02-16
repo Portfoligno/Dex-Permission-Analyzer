@@ -41,8 +41,8 @@ package object settings {
     val axplorer: MappingParser =
       _
         .linesIterator
-        .map(doubleColons.splitToList(_).asScala match {
-          case Seq(m, permission) =>
+        .flatMap(doubleColons.splitToList(_).asScala match {
+          case Seq(m, permissions) =>
             val r = m.lastIndexOf(')')
             val l = m.lastIndexOf('(', r - 1)
             val d = m.lastIndexOf('.', l - 1)
@@ -50,10 +50,13 @@ package object settings {
               m.substring(1 + d, l),
               parseArgumentTypes(m.substring(1 + l, r)))
 
-            Right(id -> ClassName.fromReflectionClassName(m.substring(0, d)) -> permission)
+            commas
+              .trimResults()
+              .split(permissions)
+              .map(p => Right(id -> ClassName.fromReflectionClassName(m.substring(0, d)) -> p))
 
           case x @ _ =>
-            Left(new IllegalArgumentException(valueOf(x)))
+            Seq(Left(new IllegalArgumentException(valueOf(x))))
         })
 
     val pScout: MappingParser =
