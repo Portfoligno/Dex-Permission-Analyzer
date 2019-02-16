@@ -5,10 +5,10 @@ import java.io.File
 import cats.Parallel
 import cats.effect.ConcurrentEffect
 import cats.syntax.functor._
-import io.github.portfoligno.dex.permission.data.{ClassName, MethodIdentity}
+import io.github.portfoligno.dex.permission.data.{ClassMethod, ClassName, MethodIdentity}
 import io.github.portfoligno.dex.permission.settings.MappingSource
+import io.github.portfoligno.dex.permission.utility.->
 import org.jf.dexlib2.DexFileFactory
-import org.jf.dexlib2.dexbacked.DexBackedMethod
 import org.jf.dexlib2.iface.instruction.ReferenceInstruction
 import org.jf.dexlib2.iface.reference.MethodReference
 
@@ -21,7 +21,7 @@ object PermissionAnalyzer {
     mappingSource: MappingSource = MappingSource()
   )(
     implicit F: Parallel[M, F]
-  ): Unit = {
+  ): M[List[AnalysisResult]] =
     mappingSource.fetch().map { table =>
       val container = DexFileFactory.loadDexContainer(file, null)
 
@@ -46,11 +46,25 @@ object PermissionAnalyzer {
       }
         yield id -> method
 
-      val o: Seq[(MethodIdentity, Seq[DexBackedMethod])] = methods
+      methods
         .groupBy(_._1)
         .view
-        .map(t => t._1 -> t._2.map(_._2).toSeq)
-        .toSeq
+        .flatMap {
+          case id -> seq =>
+            table.get(id).map(AnalysisResult(
+              id,
+              seq
+                .map {
+                  case _ -> m =>
+                    ClassMethod(
+                      ClassName.fromByteCodeClassName(m.getDefiningClass),
+                      m.getName,
+                      m.getParameterTypes.view.map(ClassName.fromByteCodeClassName).toList
+                    )
+                }
+                .toSet,
+              _))
+        }
+        .toList
     }
-  }
 }

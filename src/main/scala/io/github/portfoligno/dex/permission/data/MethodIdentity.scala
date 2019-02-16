@@ -6,7 +6,13 @@ case class MethodIdentity(
 ) {
   override
   def toString: String =
+    MethodIdentity.mkString(new StringBuilder(name), arguments)
+}
+
+object MethodIdentity {
+  private[data]
+  def mkString(b: StringBuilder, arguments: List[ClassName]): String =
     arguments
-      .addString(new StringBuilder(name), "(", ",", ")")
+      .addString(b, "(", "", ")")
       .mkString
 }
