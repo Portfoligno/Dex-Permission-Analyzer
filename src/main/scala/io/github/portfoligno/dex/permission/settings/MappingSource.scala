@@ -11,12 +11,12 @@ case class MappingSource(
   raw: List[String -> MappingParser] = List(
     "https://raw.githubusercontent.com/reddr/axplorer/master/permissions/api-25/framework-map-25.txt" -> axplorer,
     "https://raw.githubusercontent.com/reddr/axplorer/master/permissions/api-25/sdk-map-25.txt" -> axplorer,
-    "https://raw.githubusercontent.com/zyrikby/PScout/master/results/API_22/allmappings" -> pScout
+    //"https://raw.githubusercontent.com/zyrikby/PScout/master/results/API_22/allmappings" -> pScout
   ),
   extra: List[MethodIdentity -> ClassName -> String] = flip(
     FlatMap[List].flatMap[String, MethodIdentity -> ClassName -> String]
   )(
-    axplorer >>> (_.toList)
+    axplorer >>> (_.map(_.fold(throw _, identity)).toList)
   )(
     List(
       // Return types are omitted
