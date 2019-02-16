@@ -68,15 +68,15 @@ case class MappingSource(
           }
           .parSequence
       )
-      .use(_
-        .view
-        .flatten
-        .groupBy(_._1)
-        .view
-        .map(t =>
-          t._1 -> t._2.map(_._2).toSet
-        )
-        .toTable
-        .pure[M]
+      .use(s =>
+        (s.view :+ extra)
+          .flatten
+          .groupBy(_._1)
+          .view
+          .map(t =>
+            t._1 -> t._2.map(_._2).toSet
+          )
+          .toTable
+          .pure[M]
       )
 }

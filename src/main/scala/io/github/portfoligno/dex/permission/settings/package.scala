@@ -12,7 +12,7 @@ import scala.collection.TraversableOnce
 import scala.collection.convert.ImplicitConversionsToScala._
 
 package object settings {
-  private[settings] val CONTENT_PROVIDER = "CONTENT_PROVIDER"
+  val CONTENT_PROVIDER = "CONTENT_PROVIDER"
 
   private[settings] val ContentProvider = "android.content.ContentProvider"
   private[settings] val Uri = "android.net.Uri"
