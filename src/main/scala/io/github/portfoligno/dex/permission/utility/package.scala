@@ -4,6 +4,11 @@ package object utility {
   type ->[A, B] = (A, B)
   type Table[A, B, C] = Map[A, Map[B, C]]
 
+  object -> {
+    def unapply[A, B](arg: A -> B): Option[A -> B] =
+      Some(arg)
+  }
+
   object Table {
     def apply[A, B, C](elems: A -> B -> C*): Table[A, B, C] =
       elems

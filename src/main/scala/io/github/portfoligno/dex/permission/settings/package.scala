@@ -2,6 +2,7 @@ package io.github.portfoligno.dex.permission
 
 import java.lang.String.valueOf
 
+import cats.syntax.option._
 import com.google.common.base.Splitter
 import io.github.portfoligno.dex.permission.data.{ClassName, MethodIdentity}
 import io.github.portfoligno.dex.permission.utility.->
@@ -27,6 +28,11 @@ package object settings {
     val doubleColons = Splitter.on("::").limit(2).trimResults()
     private
     val commas = Splitter.on(',')
+    private
+    val spaces = Splitter.on(' ').trimResults().omitEmptyStrings().limit(3)
+
+    private
+    val `Permission:` = "Permission:"
 
     private
     def parseArgumentTypes(s: String) =
@@ -50,6 +56,39 @@ package object settings {
             Left(new IllegalArgumentException(valueOf(x)))
         })
 
-    def pScout: MappingParser = ???
+    val pScout: MappingParser =
+      _
+        .linesIterator
+        .scanLeft(
+          none[String -> Option[String]]
+        )((previous, line) =>
+          if (line.startsWith(`Permission:`)) {
+            Some(line.substring(`Permission:`.length) -> None)
+          } else if (line.charAt(0) == '<') {
+            val end = line.lastIndexOf('>')
+            previous.map(_.copy(_2 = Some(line.substring(1, end))))
+          } else {
+            previous
+          }
+        )
+        .flatMap {
+          case Some(permission -> Some(method)) =>
+            Some(spaces.splitToList(method).asScala match {
+              case Seq(classWithColon, _, m) =>
+                val r = m.lastIndexOf(')')
+                val l = m.lastIndexOf('(', r - 1)
+                val id = MethodIdentity(
+                  m.substring(0, l),
+                  parseArgumentTypes(m.substring(1 + l, r)))
+
+                Right(id -> ClassName.fromReflectionClassName(classWithColon.dropRight(1)) -> permission)
+
+              case x @ _ =>
+                Left(new IllegalArgumentException(valueOf(x)))
+            })
+
+          case _ =>
+            None
+        }
   }
 }
