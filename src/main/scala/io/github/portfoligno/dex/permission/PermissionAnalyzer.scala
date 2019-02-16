@@ -51,19 +51,29 @@ object PermissionAnalyzer {
         .view
         .flatMap {
           case id -> seq =>
-            table.get(id).map(AnalysisResult(
-              id,
-              seq
-                .map {
-                  case _ -> m =>
-                    ClassMethod(
-                      ClassName.fromByteCodeClassName(m.getDefiningClass),
-                      m.getName,
-                      m.getParameterTypes.view.map(ClassName.fromByteCodeClassName).toList
-                    )
-                }
-                .toSet,
-              _))
+            table.get(id).map(mapping =>
+              AnalysisResult(
+                id,
+                seq
+                  .map {
+                    case _ -> m =>
+                      ClassMethod(
+                        ClassName.fromByteCodeClassName(m.getDefiningClass),
+                        m.getName,
+                        m.getParameterTypes.view.map(ClassName.fromByteCodeClassName).toList
+                      )
+                  }
+                  .toSet,
+                mapping
+                  .view
+                  .flatMap {
+                    case className -> permissions =>
+                      permissions.map(_ -> className)
+                  }
+                  .groupBy(_._1)
+                  .mapValues(_.map(_._2).toSet)
+              )
+            )
         }
         .toList
     }

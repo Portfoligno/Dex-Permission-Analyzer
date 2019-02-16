@@ -5,5 +5,5 @@ import io.github.portfoligno.dex.permission.data.{ClassMethod, ClassName, Method
 case class AnalysisResult(
   method: MethodIdentity,
   callers: Set[ClassMethod],
-  permissions: Map[ClassName, Set[String]]
+  permissions: Map[String, Set[ClassName]]
 )
