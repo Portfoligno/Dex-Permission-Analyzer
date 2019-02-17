@@ -9,11 +9,13 @@ case class ClassMethod(
   def toString: String = {
     val s = declaringClass.toByteCodeClassName
     val n = s.length
+    val prefix =
+      if (n < 2) {
+        new StringBuilder("<invalid class name>") ++= s
+      } else {
+        new StringBuilder(s.substring(1, n - 1))
+      }
 
-    if (n < 2) {
-      MethodIdentity.mkString(new StringBuilder("<invalid class name>") ++= name, arguments)
-    } else {
-      MethodIdentity.mkString(new StringBuilder(s.substring(1, n - 1)) += '.' ++= name, arguments)
-    }
+    MethodIdentity.mkString(prefix += '.' ++= name, arguments)
   }
 }
