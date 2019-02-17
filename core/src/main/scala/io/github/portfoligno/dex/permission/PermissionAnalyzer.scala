@@ -13,7 +13,6 @@ import org.jf.dexlib2.iface.instruction.ReferenceInstruction
 import org.jf.dexlib2.iface.reference.MethodReference
 
 import scala.collection.convert.ImplicitConversionsToScala._
-import scala.language.reflectiveCalls
 
 object PermissionAnalyzer {
   def analyzeDexContainer[M[_] : ConcurrentEffect, F[_]](

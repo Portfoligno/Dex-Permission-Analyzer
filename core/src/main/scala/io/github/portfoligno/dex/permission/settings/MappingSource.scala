@@ -14,7 +14,6 @@ import io.github.portfoligno.dex.permission.utility.{->, Table, flip}
 import org.http4s.client.blaze.BlazeClientBuilder
 
 import scala.concurrent.ExecutionContext
-import scala.language.reflectiveCalls
 
 case class MappingSource(
   raw: List[String -> MappingParser] = List(
