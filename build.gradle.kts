@@ -25,7 +25,6 @@ dependencies {
   implementation("com.google.guava:guava:27.0.1-jre")
 
   implementation("org.smali:dexlib2:2.2.6")
-  implementation("org.http4s:http4s-dsl_2.12:0.19.0")
   implementation("org.http4s:http4s-blaze-client_2.12:0.19.0")
 }
 
