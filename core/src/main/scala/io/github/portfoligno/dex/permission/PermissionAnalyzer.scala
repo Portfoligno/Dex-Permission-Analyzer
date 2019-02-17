@@ -7,7 +7,6 @@ import cats.effect.ConcurrentEffect
 import cats.syntax.functor._
 import io.github.portfoligno.dex.permission.data.{ClassMethod, ClassName, MethodIdentity}
 import io.github.portfoligno.dex.permission.settings.MappingSource
-import io.github.portfoligno.dex.permission.utility.->
 import org.jf.dexlib2.DexFileFactory
 import org.jf.dexlib2.iface.instruction.ReferenceInstruction
 import org.jf.dexlib2.iface.reference.MethodReference
@@ -15,6 +14,8 @@ import org.jf.dexlib2.iface.reference.MethodReference
 import scala.collection.convert.ImplicitConversionsToScala._
 
 object PermissionAnalyzer {
+  import io.github.portfoligno.dex.permission.utility._
+
   def analyzeDexContainer[M[_] : ConcurrentEffect, F[_]](
     file: File,
     mapping: MappingSource = MappingSource()

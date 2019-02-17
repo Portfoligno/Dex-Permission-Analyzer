@@ -1,5 +1,7 @@
 package io.github.portfoligno.dex.permission
 
+import scala.reflect.ClassTag
+
 package object utility {
   type ->[A, B] = (A, B)
   type Table[A, B, C] = Map[A, Map[B, C]]
@@ -13,6 +15,10 @@ package object utility {
   private[permission]
   def flip[A, B, C](f: A => B => C)(x: B)(y: A): C =
     f(y)(x)
+
+  @inline
+  private[permission]
+  def classTagOf[A](implicit A: ClassTag[A]): ClassTag[A] = A
 
 
   private[permission]
