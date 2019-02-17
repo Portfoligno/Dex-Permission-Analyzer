@@ -18,14 +18,14 @@ import scala.language.reflectiveCalls
 object PermissionAnalyzer {
   def analyzeDexContainer[M[_] : ConcurrentEffect, F[_]](
     file: File,
-    mappingSource: MappingSource = MappingSource()
+    mapping: MappingSource = MappingSource()
   )(
     implicit F: Parallel[M, F]
   ): M[List[AnalysisResult]] =
-    mappingSource.fetch().map { table =>
+    mapping.fetch().map { permissionLookup =>
       val container = DexFileFactory.loadDexContainer(file, null)
 
-      val methods = for {
+      val callers = for {
         method <- container
           .getDexEntryNames
           .view
@@ -46,29 +46,29 @@ object PermissionAnalyzer {
       }
         yield id -> method
 
-      methods
+      callers
         .groupBy(_._1)
         .view
         .flatMap {
-          case id -> seq =>
-            table.get(id).map(mapping =>
+          case id -> methods =>
+            permissionLookup.get(id).map(permissions =>
               AnalysisResult(
                 id,
-                seq
+                methods
                   .map {
                     case _ -> m =>
                       ClassMethod(
                         ClassName.fromByteCodeClassName(m.getDefiningClass),
                         m.getName,
-                        m.getParameterTypes.view.map(ClassName.fromByteCodeClassName).toList
+                        ClassName.fromByteCodeClassNameK(m.getParameterTypes).toList
                       )
                   }
                   .toSet,
-                mapping
+                permissions
                   .view
                   .flatMap {
-                    case className -> permissions =>
-                      permissions.map(_ -> className)
+                    case y -> xs =>
+                      xs.map(_ -> y)
                   }
                   .groupBy(_._1)
                   .mapValues(_.map(_._2).toSet)

@@ -19,6 +19,9 @@ package object data {
     def fromByteCodeClassName(name: String): ClassName =
       name.asInstanceOf[ClassName]
 
+    def fromByteCodeClassNameK[F[_]](names: F[String]): F[ClassName] =
+      names.asInstanceOf[F[ClassName]]
+
     def fromByteCodeClassName(name: CharSequence): ClassName =
       name.toString.asInstanceOf[ClassName]
 
