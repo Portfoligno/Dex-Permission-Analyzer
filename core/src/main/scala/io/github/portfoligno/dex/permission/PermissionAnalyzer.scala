@@ -2,7 +2,6 @@ package io.github.portfoligno.dex.permission
 
 import java.io.File
 
-import cats.Parallel
 import cats.effect.ConcurrentEffect
 import cats.syntax.functor._
 import io.github.portfoligno.dex.permission.data.{ClassMethod, ClassName, MethodIdentity}
@@ -16,13 +15,11 @@ import scala.collection.convert.ImplicitConversionsToScala._
 object PermissionAnalyzer {
   import io.github.portfoligno.dex.permission.utility._
 
-  def analyzeDexContainer[M[_] : ConcurrentEffect, F[_]](
-    file: File,
-    mapping: MappingSource = MappingSource()
-  )(
-    implicit F: Parallel[M, F]
-  ): M[List[AnalysisResult]] =
-    mapping.fetch().map { permissionLookup =>
+    def analyzeDexContainer[F[_] : ConcurrentEffect](
+      file: File,
+      mapping: MappingSource = MappingSource()
+    ): F[List[AnalysisResult]] =
+      mapping.fetch().map { permissionLookup =>
       val container = DexFileFactory.loadDexContainer(file, null)
 
       val callers = for {
