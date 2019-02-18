@@ -20,58 +20,58 @@ object PermissionAnalyzer {
       mapping: MappingSource = MappingSource()
     ): F[List[AnalysisResult]] =
       mapping.fetch().map { permissionLookup =>
-      val container = DexFileFactory.loadDexContainer(file, null)
+        val container = DexFileFactory.loadDexContainer(file, null)
 
-      val callers = for {
-        method <- container
-          .getDexEntryNames
-          .view
-          .flatMap(container.getEntry(_).getClasses.toSeq)
-          .flatMap(_.getMethods)
+        val callers = for {
+          method <- container
+            .getDexEntryNames
+            .view
+            .flatMap(container.getEntry(_).getClasses.toSeq)
+            .flatMap(_.getMethods)
 
-        methodReference <- Option(method.getImplementation)
-          .toSeq
-          .flatMap(_.getInstructions)
-          .flatMap(classTagOf[ReferenceInstruction].unapply)
-          .flatMap(i => classTagOf[MethodReference].unapply(i.getReference))
+          methodReference <- Option(method.getImplementation)
+            .toSeq
+            .flatMap(_.getInstructions)
+            .flatMap(classTagOf[ReferenceInstruction].unapply)
+            .flatMap(i => classTagOf[MethodReference].unapply(i.getReference))
 
-        id = MethodIdentity(methodReference.getName, methodReference
-          .getParameterTypes
-          .view
-          .map(ClassName.fromByteCodeClassName)
-          .toList)
-      }
-        yield id -> method
-
-      callers
-        .groupBy(_._1)
-        .view
-        .flatMap {
-          case id -> methods =>
-            permissionLookup.get(id).map(permissions =>
-              AnalysisResult(
-                id,
-                methods
-                  .map {
-                    case _ -> m =>
-                      ClassMethod(
-                        ClassName.fromByteCodeClassName(m.getDefiningClass),
-                        m.getName,
-                        ClassName.fromByteCodeClassNameK(m.getParameterTypes).toList
-                      )
-                  }
-                  .toSet,
-                permissions
-                  .view
-                  .flatMap {
-                    case y -> xs =>
-                      xs.map(_ -> y)
-                  }
-                  .groupBy(_._1)
-                  .mapValues(_.map(_._2).toSet)
-              )
-            )
+          id = MethodIdentity(methodReference.getName, methodReference
+            .getParameterTypes
+            .view
+            .map(ClassName.fromByteCodeClassName)
+            .toList)
         }
-        .toList
-    }
+          yield id -> method
+
+        callers
+          .groupBy(_._1)
+          .view
+          .flatMap {
+            case id -> methods =>
+              permissionLookup.get(id).map(permissions =>
+                AnalysisResult(
+                  id,
+                  methods
+                    .map {
+                      case _ -> m =>
+                        ClassMethod(
+                          ClassName.fromByteCodeClassName(m.getDefiningClass),
+                          m.getName,
+                          ClassName.fromByteCodeClassNameK(m.getParameterTypes).toList
+                        )
+                    }
+                    .toSet,
+                  permissions
+                    .view
+                    .flatMap {
+                      case y -> xs =>
+                        xs.map(_ -> y)
+                    }
+                    .groupBy(_._1)
+                    .mapValues(_.map(_._2).toSet)
+                )
+              )
+          }
+          .toList
+      }
 }
