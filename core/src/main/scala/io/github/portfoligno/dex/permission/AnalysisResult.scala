@@ -6,6 +6,6 @@ import org.jf.dexlib2.Opcode
 
 case class AnalysisResult(
   method: MethodIdentity,
-  callers: Set[Opcode -> ClassMethod],
+  callers: Set[Opcode -> ClassName -> ClassMethod],
   permissions: Map[String, Set[ClassName]]
 )

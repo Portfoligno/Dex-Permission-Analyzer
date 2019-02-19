@@ -38,7 +38,8 @@ object PermissionAnalyzer {
           op = instruction.getOpcode
 
           methodReference <- classTagOf[MethodReference].unapply(instruction.getReference)
-          callee = op match {
+          callee = ClassName.fromByteCodeClassName(methodReference.getDefiningClass)
+          c = op match {
             case INVOKE_VIRTUAL | INVOKE_VIRTUAL_RANGE | INVOKE_VIRTUAL_QUICK | INVOKE_VIRTUAL_QUICK_RANGE
                  | INVOKE_INTERFACE | INVOKE_INTERFACE_RANGE
                  | INVOKE_POLYMORPHIC | INVOKE_POLYMORPHIC_RANGE
@@ -47,7 +48,7 @@ object PermissionAnalyzer {
             case INVOKE_SUPER | INVOKE_SUPER_RANGE | INVOKE_SUPER_QUICK | INVOKE_SUPER_QUICK_RANGE
                  | INVOKE_DIRECT | INVOKE_DIRECT_RANGE
                  | INVOKE_STATIC | INVOKE_STATIC_RANGE =>
-              Some(ClassName.fromByteCodeClassName(methodReference.getDefiningClass))
+              Some(callee)
             case r @ _ =>
               throw new IllegalArgumentException(r.name)
           }
@@ -57,7 +58,7 @@ object PermissionAnalyzer {
             .map(ClassName.fromByteCodeClassName)
             .toList)
         }
-          yield id -> callee -> (op -> method)
+          yield id -> c -> (op -> callee -> method)
 
         callers
           .groupBy(_._1)
@@ -89,8 +90,8 @@ object PermissionAnalyzer {
                 id,
                 methods
                   .map {
-                    case _ -> (op -> m) =>
-                      op -> ClassMethod(
+                    case _ -> (invocation -> m) =>
+                      invocation -> ClassMethod(
                         ClassName.fromByteCodeClassName(m.getDefiningClass),
                         m.getName,
                         ClassName.fromByteCodeClassNameK(m.getParameterTypes).toList
