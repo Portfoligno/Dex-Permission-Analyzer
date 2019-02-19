@@ -29,11 +29,12 @@ object PermissionAnalyzer {
             .flatMap(container.getEntry(_).getClasses.toSeq)
             .flatMap(_.getMethods)
 
-          methodReference <- Option(method.getImplementation)
+          instruction <- Option(method.getImplementation)
             .toSeq
             .flatMap(_.getInstructions)
             .flatMap(classTagOf[ReferenceInstruction].unapply)
-            .flatMap(i => classTagOf[MethodReference].unapply(i.getReference))
+
+          methodReference <- classTagOf[MethodReference].unapply(instruction.getReference)
 
           id = MethodIdentity(methodReference.getName, methodReference
             .getParameterTypes
@@ -41,7 +42,7 @@ object PermissionAnalyzer {
             .map(ClassName.fromByteCodeClassName)
             .toList)
         }
-          yield id -> method
+          yield id -> (method -> instruction.getOpcode)
 
         callers
           .groupBy(_._1)
@@ -53,12 +54,13 @@ object PermissionAnalyzer {
                   id,
                   methods
                     .map {
-                      case _ -> m =>
-                        ClassMethod(
+                      case _ -> (m -> op) =>
+                        val cm = ClassMethod(
                           ClassName.fromByteCodeClassName(m.getDefiningClass),
                           m.getName,
                           ClassName.fromByteCodeClassNameK(m.getParameterTypes).toList
                         )
+                        cm -> op
                     }
                     .toSet,
                   permissions
