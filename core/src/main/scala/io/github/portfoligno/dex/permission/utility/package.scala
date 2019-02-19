@@ -23,7 +23,7 @@ package object utility {
 
   private[permission]
   object implicits {
-    implicit class ToTableOps[A](private val elems: Traversable[A]) extends AnyVal {
+    implicit class TraversableOps[A](private val elems: Traversable[A]) extends AnyVal {
       def toTable[T, U, V](implicit ev: A <:< (T -> U -> V)): Table[T, U, V] =
         elems
           .groupBy(_._1._1)
@@ -31,6 +31,11 @@ package object utility {
             .view
             .map(t => t._1._2 -> t._2)
             .toMap)
+    }
+
+    implicit class TableOps[A, B, C](private val table: Table[A, B, C]) extends AnyVal {
+      def get(a: A, b: B): Option[C] =
+        table.get(a).flatMap(_.get(b))
     }
   }
 }
