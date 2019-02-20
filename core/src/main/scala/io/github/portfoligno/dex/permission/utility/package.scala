@@ -28,8 +28,7 @@ package object utility {
         elems
           .groupBy(_._1._1)
           .mapValues(_
-            .view
-            .map(t => t._1._2 -> t._2)
+            .view.map(t => t._1._2 -> t._2)
             .toMap)
     }
 

@@ -1,12 +1,12 @@
 package io.github.portfoligno.dex.permission.settings
 
-import cats.FlatMap
 import cats.effect.ConcurrentEffect
 import cats.instances.all._
 import cats.syntax.applicative._
 import cats.syntax.compose._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.parallel._
+import cats.{FlatMap, Parallel}
 import fs2.text.utf8Decode
 import io.github.portfoligno.dex.permission.data.{ClassName, MethodIdentity}
 import io.github.portfoligno.dex.permission.settings.MappingParser.{axplorer, pScout}
@@ -41,10 +41,12 @@ case class MappingSource(
   import io.github.portfoligno.dex.permission.utility.implicits._
 
   private[permission]
-  def fetch[F[_] : ConcurrentEffect](
+  def fetch[M[_] : ConcurrentEffect, F[_]](
     executionContext: ExecutionContext = ExecutionContext.global
-  ): F[Table[MethodIdentity, ClassName, Set[String]]] =
-    BlazeClientBuilder[F](executionContext)
+  )(
+    implicit F: Parallel[M, F]
+  ): M[Table[MethodIdentity, ClassName, Set[String]]] =
+    BlazeClientBuilder[M](executionContext)
       .resource
       .evalMap(client =>
         raw
@@ -63,7 +65,7 @@ case class MappingSource(
                   )
               )
           }
-          .sequence
+          .parSequence
       )
       .use(s =>
         (s.view :+ extra)
@@ -74,6 +76,6 @@ case class MappingSource(
             t._1 -> t._2.map(_._2).toSet
           )
           .toTable
-          .pure[F]
+          .pure[M]
       )
 }
